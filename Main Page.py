@@ -23,9 +23,10 @@ if file is not None:
 
     list = dataframe[0].tolist()
 
-    video_url = st.selectbox("Select a video to analyze", list)
+    video_url = st.selectbox("Select a video to analyze", list, index=0)
 
     video_title, save_location = save_audio(video_url)
+    print(save_location)
 
     st.write(list[0])
 
@@ -35,7 +36,8 @@ if file is not None:
         "auto_chapters": True
     }
     headers = {
-        "authorization": st.secrets["auth_key"],
+        # "authorization": st.secrets["auth_key"],
+        "authorization": auth_key,
         "content-type": "application/json"
     }
     response = requests.post(endpoint, json=json, headers=headers)
