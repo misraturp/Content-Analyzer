@@ -35,7 +35,7 @@ if file is not None:
         "auto_chapters": True
     }
     headers = {
-        "authorization": auth_key,
+        "authorization": st.secrets["auth_key"],
         "content-type": "application/json"
     }
     response = requests.post(endpoint, json=json, headers=headers)
