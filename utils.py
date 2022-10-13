@@ -16,7 +16,7 @@ headers = {
    "content-type": "application/json"
 }
 
-@st.cache()
+@st.cache
 def get_links():
     dataframe = pd.read_csv(st.session_state['file'], header=None)
     dataframe.columns = ['video_url']
@@ -38,7 +38,7 @@ def get_links():
 
     return dataframe
 
-@st.cache()
+@st.cache
 def save_audio(url):
     yt = YouTube(url)
     video = yt.streams.filter(only_audio=True).first()
@@ -52,7 +52,7 @@ def save_audio(url):
 
 
 ## Upload audio to AssemblyAI
-@st.cache()
+@st.cache
 def upload_to_AssemblyAI(save_location):
 	CHUNK_SIZE = 5242880
 
@@ -92,7 +92,7 @@ def upload_to_AssemblyAI(save_location):
 	print("Transcribing at", polling_endpoint)
 	return polling_endpoint
 
-@st.cache()
+@st.cache
 def get_results(dataframe, clicked, save_location):
 
 	polling_endpoint = upload_to_AssemblyAI(save_location)
