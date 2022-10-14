@@ -17,7 +17,7 @@ headers = {
 }
 
 @st.cache
-def get_links():
+def get_links(file):
     print(st.session_state['file'])
     dataframe = pd.read_csv(st.session_state['file'], header=None)
     dataframe.columns = ['video_url']
