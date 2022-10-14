@@ -30,6 +30,8 @@ st.markdown("1. a summary of the video,")
 st.markdown("2. the topics that are discussed in the video,") 
 st.markdown("3. whether there are any sensitive topics discussed in the video.")
 
+st.markdown("Make sure your links are in the format: https://www.youtube.com/watch?v=HfNnuQOHAaw and not https://youtu.be/HfNnuQOHAaw")
+
 st.file_uploader('Upload a file that includes the video links (.txt)', key="uploaded_file", on_change=update_file)
 
 if st.session_state['file'] is not None:
