@@ -8,13 +8,10 @@ With this app you can audit a Youtube channel to see if you'd like to sponsor th
 The app has 3 pages.
 
 ## A main page to upload the list of links and read the summary of the video
-<img src="images/main_page.png"
-     alt="Main page"/>
+[](images/main_page.png)
 
 ## A page to display the topics discussed in the video
-<img src="images/topics_page.png"
-     alt="Topics page"/>
+[](images/topics_page.png)
 
 ## A page to see detected sensitive topics discussed in the video
-<img src="images/moderation_page.png"
-     alt="Moderation page"/>
+[](images/moderation_page.png)
