@@ -14,8 +14,8 @@ if 'start_point' not in st.session_state:
     st.session_state['start_point'] = 0
     st.session_state['selected_video'] = -1
     st.session_state['videos'] = []
-    st.session_state['content_moderation'] = []
-    st.session_state['topic_labels'] = []
+    st.session_state['content_moderation'] = None
+    st.session_state['topic_labels'] = None
     st.session_state['file'] = None
 
 def update_start(start_t):
