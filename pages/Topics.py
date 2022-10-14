@@ -12,9 +12,7 @@ if st.session_state['topic_labels'] != None:
     topics_df = pd.DataFrame(st.session_state['topic_labels']['summary'].items())
     topics_df.columns = ['topic','confidence']
     topics_df["topic"] = topics_df["topic"].str.split(">")
-    topics_df[['high-level topic','sub-topic','main-topic']] = pd.DataFrame(topics_df.topic.tolist(), index= topics_df.index)
-    topics_df = topics_df.drop('topic', axis=1)
-    # topics_df = topics_df.groupby(['high-level topic', 'sub-topic', 'main-topic']).confidence.sum().to_frame()
-    topics_df = topics_df.set_index(['high-level topic', 'sub-topic', 'main-topic']).sort_values(['confidence'], ascending=False)
-    print(topics_df)
+    expanded_topics = topics_df.topic.apply(pd.Series).add_prefix('topic_level_')
+    topics_df = topics_df.join(expanded_topics).drop('topic', axis=1).sort_values(['confidence'], ascending=False).fillna('')
+
     st.dataframe(topics_df, use_container_width=True)

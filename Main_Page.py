@@ -49,7 +49,7 @@ if st.session_state['file'] is not None:
     key = "selected_image"
     )
 
-    st.markdown(f"Image #{clicked} clicked" if clicked > -1 else "No image clicked")
+    st.markdown(f"Thumbnail #{clicked} clicked" if clicked > -1 else "No image clicked")
 
     print(st.session_state['selected_image'])
     if clicked > -1:
