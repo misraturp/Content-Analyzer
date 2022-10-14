@@ -25,7 +25,7 @@ def update_file():
     st.session_state['file'] = st.session_state["uploaded_file"]
 
 st.title("Analyze a YouTube channel's content")
-st.markdown("With this app you can audit a Youtube channel to see if you'd like to sponsor them. All you have to do is to pass a list of links to the videos of this channel and you will get a list of thumbnails. Once you select a video, you can view")
+st.markdown("With this app you can audit a Youtube channel to see if you'd like to sponsor them. All you have to do is to pass a list of links to the videos of this channel and you will get a list of thumbnails. Once you select a video by clicking its thumbnail, you can view:")
 st.markdown("1. a summary of the video,") 
 st.markdown("2. the topics that are discussed in the video,") 
 st.markdown("3. whether there are any sensitive topics discussed in the video.")
