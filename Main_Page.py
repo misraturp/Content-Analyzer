@@ -10,7 +10,7 @@ import json
 from st_clickable_images import clickable_images
 
 ## Set session state
-if 'start_point' not in st.session_state:
+if 'start_point' or 'selected_video' or 'videos' or 'content_moderation' or 'topic_labels' or 'file' not in st.session_state:
     st.session_state['start_point'] = 0
     st.session_state['selected_video'] = -1
     st.session_state['videos'] = []
