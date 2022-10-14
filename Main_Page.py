@@ -34,7 +34,7 @@ st.file_uploader('Upload a file that includes the video links (.txt)', key="uplo
 
 if st.session_state['file'] is not None:
 
-    dataframe = get_links(st.session_state['file'])
+    dataframe = get_links()
     st.session_state['videos'] = dataframe
 
     thumbnails_list = dataframe["thumbnail_url"].tolist()
