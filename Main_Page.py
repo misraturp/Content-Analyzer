@@ -34,8 +34,8 @@ st.markdown("Make sure your links are in the format: https://www.youtube.com/wat
 
 st.file_uploader('Upload a file that includes the video links (.txt)', key="uploaded_file", on_change=update_file)
 
-with open('./links.txt') as f:
-   st.session_state['file'] = f
+f = open('./links.txt')
+st.session_state['file'] = f
 
 
 if st.session_state['file'] is not None:
