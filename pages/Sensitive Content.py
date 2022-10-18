@@ -17,3 +17,5 @@ if st.session_state['content_moderation'] != None:
         st.dataframe(moderation_df, use_container_width=True)
     else:
         st.header('✅ All clear! No sensitive content detected.')
+else:
+    st.title('Once you select a video on the main page, you can see the sensitive topics here.')
