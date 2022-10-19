@@ -25,6 +25,8 @@ def update_start(start_t):
 
 def update_file():
     st.session_state['file'] = st.session_state["uploaded_file"]
+    print('uploaded file is: ' + str(st.session_state["uploaded_file"]))
+    print('uploaded file is: ' + str(st.session_state["file"]))
 
 def use_example_toggle():
     if st.session_state['use_example'] == True:
@@ -46,12 +48,17 @@ st.checkbox('Use default example file', on_change = use_example_toggle)
 if st.session_state['use_example'] == True:
     f = open('./mbeast_links.txt')
     st.session_state['file'] = f
+    filename = "mbeast_links.txt"
 elif st.session_state['use_example'] == False:
-    st.file_uploader('Upload a file that includes the video links (.txt)', key="uploaded_file", on_change=update_file)
+    file = st.file_uploader('Upload a file that includes the video links (.txt)', key="uploaded_file", on_change=update_file)
+    if file != None:
+        filename = file.name
 
-if st.session_state['file'] is not None:
+if st.session_state["file"] is not None:
 
-    dataframe = get_links(st.session_state['file'])
+    print('And even in here, the uploaded file is: ' + str(st.session_state["file"]))
+    file = st.session_state["file"]
+    dataframe = get_links(filename)
     st.session_state['videos'] = dataframe
 
     thumbnails_list = dataframe["thumbnail_url"].tolist()

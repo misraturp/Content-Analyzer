@@ -17,9 +17,10 @@ headers = {
 }
 
 @st.cache
-def get_links(file):
+def get_links(filename):
 	
-    dataframe = pd.read_csv(file, header=None)
+    print(filename)
+    dataframe = pd.read_csv(st.session_state["file"], header=None)
     dataframe.columns = ['video_url']
     list = dataframe["video_url"].tolist()
 
