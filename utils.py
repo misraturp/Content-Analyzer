@@ -17,10 +17,9 @@ headers = {
 }
 
 @st.cache
-def get_links():
+def get_links(file):
 	
-    print(st.session_state['file'])
-    dataframe = pd.read_csv(st.session_state['file'], header=None)
+    dataframe = pd.read_csv(file, header=None)
     dataframe.columns = ['video_url']
     list = dataframe["video_url"].tolist()
 
@@ -113,18 +112,12 @@ def get_results(dataframe, clicked, save_location):
 		elif status == 'completed':
 			print('creating transcript')
 
-			# print(json.dumps(polling_response.json(), indent=4, sort_keys=True))
-
 			# Display summaries
 			chapters = polling_response.json()['chapters']
 			content_moderation = polling_response.json()["content_safety_labels"]
 			topic_labels = polling_response.json()["iab_categories_result"]
-			
-			chapters_df = pd.DataFrame(chapters)
-			chapters_df['start_str'] = chapters_df['start'].apply(convertMillis)
-			chapters_df['end_str'] = chapters_df['end'].apply(convertMillis)
 
-			return chapters_df, content_moderation, topic_labels
+			return chapters, content_moderation, topic_labels
 
 			break
 		else:

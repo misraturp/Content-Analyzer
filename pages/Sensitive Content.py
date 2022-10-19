@@ -6,9 +6,6 @@ st.set_page_config(
     page_icon="🚨",
 )
 
-print(st.session_state['content_moderation'])
-
-
 if st.session_state['content_moderation'] != None:
     if st.session_state['content_moderation']['summary'] != {}:
         st.header('🚨 Mention of the following sensitive topics detected.')
