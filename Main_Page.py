@@ -84,7 +84,7 @@ if st.session_state["file"] is not None:
         st.header(video_title)
         st.audio(save_location, start_time=st.session_state['start_point'])
 
-        chapters, content_moderation, topic_labels = get_results(dataframe, st.session_state['selected_video'], save_location)
+        chapters, content_moderation, topic_labels = get_results(save_location)
 
         st.session_state['content_moderation'] = content_moderation
         st.session_state['topic_labels'] = topic_labels

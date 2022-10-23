@@ -95,7 +95,9 @@ def upload_to_AssemblyAI(save_location):
 	return polling_endpoint
 
 @st.cache
-def get_results(dataframe, clicked, save_location):
+def get_results(save_location):
+
+	print(save_location)
 
 	polling_endpoint = upload_to_AssemblyAI(save_location)
 
