@@ -17,3 +17,6 @@ The app has 3 pages.
 
 ## A page to see detected sensitive topics discussed in the video
 ![](images/moderation_page.png)
+
+
+P.S.: Feel free to contribute to the code if you run into any errors!
