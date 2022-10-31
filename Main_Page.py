@@ -1,105 +1,158 @@
 import streamlit as st
-import pandas as pd
-from utils import *
-import requests
-from configure import auth_key
-from time import sleep
-import json
-
-## custom component = https://discuss.streamlit.io/t/custom-component-to-display-clickable-images/21604
 from st_clickable_images import clickable_images
+from pytube import YouTube
+import os
+import pandas as pd
+import requests
+from time import sleep
 
-## Set session state
-if 'start_point' and 'selected_video' and 'videos' and 'content_moderation' and 'topic_labels' and 'file' not in st.session_state:
-    st.session_state['start_point'] = 0
-    st.session_state['selected_video'] = -1
-    st.session_state['videos'] = []
-    st.session_state['chapters'] = None
-    st.session_state['content_moderation'] = None
-    st.session_state['topic_labels'] = None
-    st.session_state['file'] = None
-    st.session_state['use_example'] = False
+transcript_endpoint = "https://api.assemblyai.com/v2/transcript"
+upload_endpoint = "https://api.assemblyai.com/v2/upload"
 
-def update_start(start_t):
-    st.session_state['start_point'] = int(start_t / 1000)
+headers = {
+	"authorization": st.secrets["auth_key"],
+    "content-type": "application/json"
+}
 
-def update_file():
-    st.session_state['file'] = st.session_state["uploaded_file"]
-    print('uploaded file is: ' + str(st.session_state["uploaded_file"]))
-    print('uploaded file is: ' + str(st.session_state["file"]))
+def upload_to_AssemblyAI(save_location):
+	CHUNK_SIZE = 5242880
 
-def use_example_toggle():
-    if st.session_state['use_example'] == True:
-        st.session_state['use_example'] = False
-        st.session_state['file'] = None
-    elif st.session_state['use_example'] == False:
-        st.session_state['use_example'] = True
+	def read_file(filename):
+		with open(filename, 'rb') as _file:
+			while True:
+				print("chunk uploaded")
+				data = _file.read(CHUNK_SIZE)
+				if not data:
+					break
+				yield data
+
+	upload_response = requests.post(
+		upload_endpoint,
+		headers=headers, data=read_file(save_location)
+	)
+	print(upload_response.json())
+
+	audio_url = upload_response.json()['upload_url']
+	print('Uploaded to', audio_url)
 
 
-st.title("Analyze a YouTube channel's content")
-st.markdown("With this app you can audit a Youtube channel to see if you'd like to sponsor them. All you have to do is to pass a list of links to the videos of this channel and you will get a list of thumbnails. Once you select a video by clicking its thumbnail, you can view:")
-st.markdown("1. a summary of the video,") 
-st.markdown("2. the topics that are discussed in the video,") 
-st.markdown("3. whether there are any sensitive topics discussed in the video.")
-st.markdown("Make sure your links are in the format: https://www.youtube.com/watch?v=HfNnuQOHAaw and not https://youtu.be/HfNnuQOHAaw")
+	## Start transcription job of audio file
+	data = {
+		'audio_url': audio_url,
+		'iab_categories': True,
+		'content_safety': True,
+        "summarization": True,
+        "summary_type": "bullets"
+	}
 
-st.checkbox('Use default example file', on_change = use_example_toggle)
+	transcript_response = requests.post(transcript_endpoint, json=data, headers=headers)
+	print(transcript_response)
 
-if st.session_state['use_example'] == True:
-    f = open('./mbeast_links.txt')
-    st.session_state['file'] = f
-    filename = "mbeast_links.txt"
-elif st.session_state['use_example'] == False:
-    file = st.file_uploader('Upload a file that includes the video links (.txt)', key="uploaded_file", on_change=update_file)
-    if file != None:
-        filename = file.name
+	transcript_id = transcript_response.json()['id']
+	polling_endpoint = transcript_endpoint + "/" + transcript_id
 
-if st.session_state["file"] is not None:
+	print("Transcribing at", polling_endpoint)
+	return polling_endpoint
 
-    print('And even in here, the uploaded file is: ' + str(st.session_state["file"]))
-    file = st.session_state["file"]
-    dataframe = get_links(filename)
-    st.session_state['videos'] = dataframe
+def get_summary_of_video(save_location):
+    polling_endpoint = upload_to_AssemblyAI(save_location)
 
-    thumbnails_list = dataframe["thumbnail_url"].tolist()
-    name_list = dataframe["video_title"].tolist()
+    status = 'submitted'
 
-    st.session_state['selected_video'] = clickable_images(thumbnails_list,
-    titles= name_list,
+    while True:
+        polling_response = requests.get(polling_endpoint, headers=headers)
+        status = polling_response.json()['status']
+
+        if status == 'submitted' or status == 'processing':
+            print('not ready yet')
+            sleep(10)
+
+        elif status == 'completed':
+            print('creating transcript')
+
+            return polling_response #chapters, content_moderation, topic_labels
+
+            break
+        else:
+            print('error')
+            return False
+            break
+
+@st.cache
+def save_audio(url):
+    yt = YouTube(url)
+    video = yt.streams.filter(only_audio=True).first()
+    out_file = video.download()
+    base, ext = os.path.splitext(out_file)
+    file_name = base + '.mp3'
+    os.rename(out_file, file_name)
+    print(yt.title + " has been successfully downloaded.")
+    print(file_name)
+    return yt.title, file_name, yt.thumbnail_url
+
+file = st.file_uploader('Upload a file that includes the video links (.txt)')
+
+if file is not None:
+    print(file)
+    dataframe = pd.read_csv(file, header=None)
+    dataframe.columns = ['video_url']
+    urls_list = dataframe["video_url"].tolist()
+
+    titles = []
+    locations = []
+    thumbnails = []
+
+    for video_url in urls_list:
+        video_title, save_location, thumbnail_url = save_audio(video_url)
+        titles.append(video_title)
+        locations.append(save_location)
+        thumbnails.append(thumbnail_url)
+
+    print(titles)
+    print(locations)
+
+    selected_video = clickable_images(thumbnails,
+    titles = titles,
     div_style={"height": "400px", "display": "flex", "justify-content": "center", "flex-wrap": "wrap", "overflow-y":"auto"},
-    img_style={"margin": "5px", "height": "150px"},
-    key = "selected_image"
+    img_style={"margin": "5px", "height": "150px"}
     )
 
-    print(st.session_state['selected_video'])
+    st.markdown(f"Thumbnail #{selected_video} clicked" if selected_video > -1 else "No image clicked")
 
-    st.markdown(f"Thumbnail #{st.session_state['selected_video']} clicked" if st.session_state['selected_video'] > -1 else "No image clicked")
-
-    print(st.session_state['selected_image'])
-    if st.session_state['selected_video'] > -1:
-        video_url = dataframe.loc[st.session_state['selected_video']]['video_url']
-        video_title = dataframe.loc[st.session_state['selected_video']]['video_title']
-        save_location = dataframe.loc[st.session_state['selected_video']]['save_location']
-
+    if selected_video > -1:
+        video_url = urls_list[selected_video]
+        video_title = titles[selected_video]
+        save_location = locations[selected_video]
+                
         st.header(video_title)
-        st.audio(save_location, start_time=st.session_state['start_point'])
+        st.audio(save_location)
 
-        chapters, content_moderation, topic_labels = get_results(save_location)
+        results = get_summary_of_video(save_location)
 
-        st.session_state['content_moderation'] = content_moderation
-        st.session_state['topic_labels'] = topic_labels
-        st.session_state['chapters'] = chapters
+        # Display summaries
+        chapters = results.json()['summary']
+        content_moderation = results.json()["content_safety_labels"]
+        topic_labels = results.json()["iab_categories_result"]
 
-        st.subheader('Summary notes for this video')
+        print(results.json())
 
-        if st.session_state['chapters'] != None:
+        st.header("Video summary")
+        st.write(chapters)
 
-            chapters_df = pd.DataFrame(chapters)
-            chapters_df['start_str'] = chapters_df['start'].apply(convertMillis)
-            chapters_df['end_str'] = chapters_df['end'].apply(convertMillis)
-            for index, row in chapters_df.iterrows():
-                with st.expander(row['gist']):
-                    st.write(row['summary'])
-                    st.button(row['start_str'], on_click=update_start, args=(row['start'],))
+        st.header("Sensitive content")
+        if content_moderation['summary'] != {}:
+            st.subheader('🚨 Mention of the following sensitive topics detected.')
+            moderation_df = pd.DataFrame(content_moderation['summary'].items())
+            moderation_df.columns = ['topic','confidence']
+            st.dataframe(moderation_df, use_container_width=True)
         else:
-            st.write("No summary was extracted from this video.")
+            st.subheader('✅ All clear! No sensitive content detected.')
+
+        st.header("Topics discussed")
+        topics_df = pd.DataFrame(topic_labels['summary'].items())
+        topics_df.columns = ['topic','confidence']
+        topics_df["topic"] = topics_df["topic"].str.split(">")
+        expanded_topics = topics_df.topic.apply(pd.Series).add_prefix('topic_level_')
+        topics_df = topics_df.join(expanded_topics).drop('topic', axis=1).sort_values(['confidence'], ascending=False).fillna('')
+
+        st.dataframe(topics_df, use_container_width=True)
