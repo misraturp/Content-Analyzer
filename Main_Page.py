@@ -130,14 +130,14 @@ if file is not None:
         results = get_summary_of_video(save_location)
 
         # Display summaries
-        chapters = results.json()['summary']
+        bullet_points = results.json()['summary']
         content_moderation = results.json()["content_safety_labels"]
         topic_labels = results.json()["iab_categories_result"]
 
         print(results.json())
 
         st.header("Video summary")
-        st.write(chapters)
+        st.write(bullet_points)
 
         st.header("Sensitive content")
         if content_moderation['summary'] != {}:
