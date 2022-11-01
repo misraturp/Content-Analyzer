@@ -14,6 +14,7 @@ headers = {
     "content-type": "application/json"
 }
 
+@st.experimental_memo
 def upload_to_AssemblyAI(save_location):
 	CHUNK_SIZE = 5242880
 
@@ -54,6 +55,7 @@ def upload_to_AssemblyAI(save_location):
 	print("Transcribing at", polling_endpoint)
 	return polling_endpoint
 
+@st.experimental_memo
 def get_summary_of_video(save_location):
     polling_endpoint = upload_to_AssemblyAI(save_location)
 
@@ -78,7 +80,7 @@ def get_summary_of_video(save_location):
             return False
             break
 
-@st.cache
+@st.experimental_memo
 def save_audio(url):
     yt = YouTube(url)
     video = yt.streams.filter(only_audio=True).first()
