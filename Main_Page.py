@@ -93,7 +93,20 @@ def save_audio(url):
     print(file_name)
     return yt.title, file_name, yt.thumbnail_url
 
-file = st.file_uploader('Upload a file that includes the video links (.txt)')
+
+st.title("Analyze a YouTube channel's content")
+st.markdown("With this app you can audit a Youtube channel to see if you'd like to sponsor them. All you have to do is to pass a list of links to the videos of this channel and you will get a list of thumbnails. Once you select a video by clicking its thumbnail, you can view:")
+st.markdown("1. a summary of the video,") 
+st.markdown("2. the topics that are discussed in the video,") 
+st.markdown("3. whether there are any sensitive topics discussed in the video.")
+st.markdown("Make sure your links are in the format: https://www.youtube.com/watch?v=HfNnuQOHAaw and not https://youtu.be/HfNnuQOHAaw")
+
+default_bool = st.checkbox('Use default example file', )
+
+if default_bool:
+    file = open('./links.txt')
+else:  
+    file = st.file_uploader('Upload a file that includes the video links (.txt)')
 
 if file is not None:
     print(file)
@@ -130,6 +143,7 @@ if file is not None:
         st.header(video_title)
         st.audio(save_location)
 
+        print(save_location)
         results = get_summary_of_video(save_location)
 
         # Display summaries
