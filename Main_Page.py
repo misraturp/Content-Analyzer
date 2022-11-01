@@ -62,6 +62,7 @@ def get_summary_of_video(save_location):
     status = 'submitted'
 
     while True:
+        print(status)
         polling_response = requests.get(polling_endpoint, headers=headers)
         status = polling_response.json()['status']
 
