@@ -143,8 +143,8 @@ if file is not None:
         st.header(video_title)
         st.audio(save_location)
 
-        print(save_location)
         results = get_summary_of_video(save_location)
+        st.write(results)
 
         # Display summaries
         bullet_points = results.json()['summary']
