@@ -10,8 +10,7 @@ upload_endpoint = "https://api.assemblyai.com/v2/upload"
 transcript_endpoint = "https://api.assemblyai.com/v2/transcript"
 
 headers = {
-    # "authorization": st.secrets["auth_key"],
-    "authorization": "627a915e0fc54459b443b3d7987f9da9",
+    "authorization": st.secrets["auth_key"],
     "content-type": "application/json"
 }
 
