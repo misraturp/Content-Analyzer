@@ -1,63 +1,79 @@
 import streamlit as st
 from st_clickable_images import clickable_images
+import pandas as pd
 from pytube import YouTube
 import os
-import pandas as pd
 import requests
 from time import sleep
 
-transcript_endpoint = "https://api.assemblyai.com/v2/transcript"
 upload_endpoint = "https://api.assemblyai.com/v2/upload"
+transcript_endpoint = "https://api.assemblyai.com/v2/transcript"
 
 headers = {
-	"authorization": st.secrets["auth_key"],
+    # "authorization": st.secrets["auth_key"],
+    "authorization": "627a915e0fc54459b443b3d7987f9da9",
     "content-type": "application/json"
 }
 
 @st.experimental_memo
-def upload_to_AssemblyAI(save_location):
-	CHUNK_SIZE = 5242880
-
-	def read_file(filename):
-		with open(filename, 'rb') as _file:
-			while True:
-				print("chunk uploaded")
-				data = _file.read(CHUNK_SIZE)
-				if not data:
-					break
-				yield data
-
-	upload_response = requests.post(
-		upload_endpoint,
-		headers=headers, data=read_file(save_location)
-	)
-	print(upload_response.json())
-
-	audio_url = upload_response.json()['upload_url']
-	print('Uploaded to', audio_url)
-
-
-	## Start transcription job of audio file
-	data = {
-		'audio_url': audio_url,
-		'iab_categories': True,
-		'content_safety': True,
-        "summarization": True,
-        "summary_type": "bullets"
-	}
-
-	transcript_response = requests.post(transcript_endpoint, json=data, headers=headers)
-	print(transcript_response)
-
-	transcript_id = transcript_response.json()['id']
-	polling_endpoint = transcript_endpoint + "/" + transcript_id
-
-	print("Transcribing at", polling_endpoint)
-	return polling_endpoint
+def save_audio(url):
+    yt = YouTube(url)
+    video = yt.streams.filter(only_audio=True).first()
+    out_file = video.download()
+    base, ext = os.path.splitext(out_file)
+    file_name = base + '.mp3'
+    os.rename(out_file, file_name)
+    print(yt.title + " has been successfully downloaded.")
+    print(file_name)
+    return yt.title, file_name, yt.thumbnail_url
 
 @st.experimental_memo
-def get_summary_of_video(save_location):
-    polling_endpoint = upload_to_AssemblyAI(save_location)
+def upload_to_AssemblyAI(save_location):
+    CHUNK_SIZE = 5242880
+
+    def read_file(filename):
+        with open(filename, 'rb') as _file:
+            while True:
+                print("chunk uploaded")
+                data = _file.read(CHUNK_SIZE)
+                if not data:
+                    break
+                yield data
+
+    upload_response = requests.post(
+        upload_endpoint,
+        headers=headers, data=read_file(save_location)
+    )
+    print(upload_response.json())
+
+    audio_url = upload_response.json()['upload_url']
+    print('Uploaded to', audio_url)
+
+    return audio_url
+
+@st.experimental_memo
+def start_analysis(audio_url):
+
+    ## Start transcription job of audio file
+    data = {
+        'audio_url': audio_url,
+        'iab_categories': True,
+        'content_safety': True,
+        "summarization": True,
+        "summary_type": "bullets"
+    }
+
+    transcript_response = requests.post(transcript_endpoint, json=data, headers=headers)
+    print(transcript_response)
+
+    transcript_id = transcript_response.json()['id']
+    polling_endpoint = transcript_endpoint + "/" + transcript_id
+
+    print("Transcribing at", polling_endpoint)
+    return polling_endpoint
+
+@st.experimental_memo
+def get_analysis_results(polling_endpoint):
 
     status = 'submitted'
 
@@ -81,51 +97,35 @@ def get_summary_of_video(save_location):
             return False
             break
 
-@st.experimental_memo
-def save_audio(url):
-    yt = YouTube(url)
-    video = yt.streams.filter(only_audio=True).first()
-    out_file = video.download()
-    base, ext = os.path.splitext(out_file)
-    file_name = base + '.mp3'
-    os.rename(out_file, file_name)
-    print(yt.title + " has been successfully downloaded.")
-    print(file_name)
-    return yt.title, file_name, yt.thumbnail_url
-
-
-st.title("Analyze a YouTube channel's content")
+st.title("YouTube Content Analyzer")
 st.markdown("With this app you can audit a Youtube channel to see if you'd like to sponsor them. All you have to do is to pass a list of links to the videos of this channel and you will get a list of thumbnails. Once you select a video by clicking its thumbnail, you can view:")
 st.markdown("1. a summary of the video,") 
 st.markdown("2. the topics that are discussed in the video,") 
 st.markdown("3. whether there are any sensitive topics discussed in the video.")
 st.markdown("Make sure your links are in the format: https://www.youtube.com/watch?v=HfNnuQOHAaw and not https://youtu.be/HfNnuQOHAaw")
 
-default_bool = st.checkbox('Use default example file', )
+default_bool = st.checkbox("Use a default file")
 
 if default_bool:
-    file = open('./links.txt')
-else:  
-    file = st.file_uploader('Upload a file that includes the video links (.txt)')
+    file = open("./links.txt")
+else:
+    file = st.file_uploader("Upload a file that includes the links (.txt)")
 
 if file is not None:
-    print(file)
     dataframe = pd.read_csv(file, header=None)
-    dataframe.columns = ['video_url']
-    urls_list = dataframe["video_url"].tolist()
+    dataframe.columns = ['urls']
+    urls_list = dataframe['urls'].tolist()
 
     titles = []
     locations = []
     thumbnails = []
 
     for video_url in urls_list:
-        video_title, save_location, thumbnail_url = save_audio(video_url)
+        # download audio
+        video_title, save_location, video_thumbnail = save_audio(video_url)
         titles.append(video_title)
         locations.append(save_location)
-        thumbnails.append(thumbnail_url)
-
-    print(titles)
-    print(locations)
+        thumbnails.append(video_thumbnail)
 
     selected_video = clickable_images(thumbnails,
     titles = titles,
@@ -139,37 +139,49 @@ if file is not None:
         video_url = urls_list[selected_video]
         video_title = titles[selected_video]
         save_location = locations[selected_video]
-                
+
         st.header(video_title)
         st.audio(save_location)
 
-        results = get_summary_of_video(save_location)
-        st.write(results)
+        # upload mp3 file to AssemblyAI
+        audio_url = upload_to_AssemblyAI(save_location)
 
-        # Display summaries
-        bullet_points = results.json()['summary']
-        content_moderation = results.json()["content_safety_labels"]
-        topic_labels = results.json()["iab_categories_result"]
+        # start analysis of the file
+        polling_endpoint = start_analysis(audio_url)
 
-        print(results.json())
+        # receive the results
+        results = get_analysis_results(polling_endpoint)
 
-        st.header("Video summary")
-        st.write(bullet_points)
+        summary = results.json()['summary']
+        topics = results.json()['iab_categories_result']['summary']
+        sensitive_topics = results.json()['content_safety_labels']['summary']
+
+        st.header("Summary of this video")
+        st.write(summary)
 
         st.header("Sensitive content")
-        if content_moderation['summary'] != {}:
+        if sensitive_topics != {}:
             st.subheader('🚨 Mention of the following sensitive topics detected.')
-            moderation_df = pd.DataFrame(content_moderation['summary'].items())
+            moderation_df = pd.DataFrame(sensitive_topics.items())
             moderation_df.columns = ['topic','confidence']
             st.dataframe(moderation_df, use_container_width=True)
+
         else:
-            st.subheader('✅ All clear! No sensitive content detected.')
+            st.subheader('✅ All clear! No sensitive content detected.')   
 
         st.header("Topics discussed")
-        topics_df = pd.DataFrame(topic_labels['summary'].items())
+        topics_df = pd.DataFrame(topics.items())
         topics_df.columns = ['topic','confidence']
         topics_df["topic"] = topics_df["topic"].str.split(">")
         expanded_topics = topics_df.topic.apply(pd.Series).add_prefix('topic_level_')
         topics_df = topics_df.join(expanded_topics).drop('topic', axis=1).sort_values(['confidence'], ascending=False).fillna('')
+        
+        st.dataframe(topics_df)
 
-        st.dataframe(topics_df, use_container_width=True)
+
+
+
+
+
+
+
