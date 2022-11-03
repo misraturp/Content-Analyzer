@@ -85,7 +85,7 @@ def get_analysis_results(polling_endpoint):
         # st.write(polling_response.json())
         st.write(status)
 
-        if status == 'submitted' or status == 'processing':
+        if status == 'submitted' or status == 'processing' or status == 'queued':
             print('not ready yet')
             sleep(10)
 
