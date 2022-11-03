@@ -83,6 +83,7 @@ def get_analysis_results(polling_endpoint):
         polling_response = requests.get(polling_endpoint, headers=headers)
         status = polling_response.json()['status']
         st.write(polling_response.json())
+        st.write(status)
 
         if status == 'submitted' or status == 'processing':
             print('not ready yet')
