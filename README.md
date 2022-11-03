@@ -5,7 +5,7 @@ With this app you can audit a Youtube channel to see if you'd like to sponsor th
 2. the topics that are discussed in the video,
 3. whether there are any sensitive topics discussed in the video.
 
-![Alt Text](images/content_analyzer_updated.gif)
+![This is how the app works](content_analyzer_updated_compressed.gif)
 
 You can try it out yourself at [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://misraturp-content-analyzer-main-page-xzzvx9.streamlitapp.com/)
 
