@@ -82,6 +82,7 @@ def get_analysis_results(polling_endpoint):
         print(status)
         polling_response = requests.get(polling_endpoint, headers=headers)
         status = polling_response.json()['status']
+        st.write(polling_response.json())
 
         if status == 'submitted' or status == 'processing':
             print('not ready yet')
@@ -90,7 +91,7 @@ def get_analysis_results(polling_endpoint):
         elif status == 'completed':
             print('creating transcript')
 
-            return polling_response #chapters, content_moderation, topic_labels
+            return polling_response
 
             break
         else:
