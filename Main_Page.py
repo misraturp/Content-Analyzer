@@ -29,6 +29,7 @@ def save_audio(url):
 @st.experimental_memo
 def upload_to_AssemblyAI(save_location):
     CHUNK_SIZE = 5242880
+    print(save_location)
 
     def read_file(filename):
         with open(filename, 'rb') as _file:
@@ -52,6 +53,7 @@ def upload_to_AssemblyAI(save_location):
 
 @st.experimental_memo
 def start_analysis(audio_url):
+    print(audio_url)
 
     ## Start transcription job of audio file
     data = {
