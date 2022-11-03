@@ -9,4 +9,4 @@ With this app you can audit a Youtube channel to see if you'd like to sponsor th
 
 You can try it out yourself at [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://misraturp-content-analyzer-main-page-xzzvx9.streamlitapp.com/)
 
-Did you build an app with Streamlit and AssemblyAI? Let us know on [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/bukotsunikki.svg?style=social&label=Follow%20%40AssemblyAI)](https://twitter.com/AssemblyAI)
+Did you build an app with Streamlit and AssemblyAI? Let us know on Twitter: [![Twitter](https://img.shields.io/twitter/url/https/twitter.com/bukotsunikki.svg?style=social&label=Follow%20%40AssemblyAI)](https://twitter.com/AssemblyAI)
