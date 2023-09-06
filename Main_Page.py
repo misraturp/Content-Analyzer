@@ -17,8 +17,11 @@ headers = {
 @st.experimental_memo
 def save_audio(url):
     yt = YouTube(url)
-    video = yt.streams.filter(only_audio=True).first()
-    out_file = video.download()
+    try:
+        video = yt.streams.filter(only_audio=True).first()
+        out_file = video.download()
+    except:
+        return None, None, None
     base, ext = os.path.splitext(out_file)
     file_name = base + '.mp3'
     os.rename(out_file, file_name)
@@ -46,10 +49,13 @@ def upload_to_AssemblyAI(save_location):
     )
     print(upload_response.json())
 
+    if "error" in upload_response.json():
+        return None, upload_response.json()["error"]
+
     audio_url = upload_response.json()['upload_url']
     print('Uploaded to', audio_url)
 
-    return audio_url
+    return audio_url, None
 
 @st.experimental_memo
 def start_analysis(audio_url):
@@ -61,17 +67,21 @@ def start_analysis(audio_url):
         'iab_categories': True,
         'content_safety': True,
         "summarization": True,
+        "summary_model": "informative",
         "summary_type": "bullets"
     }
 
     transcript_response = requests.post(transcript_endpoint, json=data, headers=headers)
-    print(transcript_response)
+    print(transcript_response.json())
+
+    if 'error' in transcript_response.json():
+        return None, transcript_response.json()['error']
 
     transcript_id = transcript_response.json()['id']
     polling_endpoint = transcript_endpoint + "/" + transcript_id
 
     print("Transcribing at", polling_endpoint)
-    return polling_endpoint
+    return polling_endpoint, None
 
 @st.experimental_memo
 def get_analysis_results(polling_endpoint):
@@ -126,9 +136,10 @@ if file is not None:
     for video_url in urls_list:
         # download audio
         video_title, save_location, video_thumbnail = save_audio(video_url)
-        titles.append(video_title)
-        locations.append(save_location)
-        thumbnails.append(video_thumbnail)
+        if video_title:
+            titles.append(video_title)
+            locations.append(save_location)
+            thumbnails.append(video_thumbnail)
 
     selected_video = clickable_images(thumbnails,
     titles = titles,
@@ -147,39 +158,45 @@ if file is not None:
         st.audio(save_location)
 
         # upload mp3 file to AssemblyAI
-        audio_url = upload_to_AssemblyAI(save_location)
-
-        # start analysis of the file
-        polling_endpoint = start_analysis(audio_url)
-
-        # receive the results
-        results = get_analysis_results(polling_endpoint)
-
-        summary = results.json()['summary']
-        topics = results.json()['iab_categories_result']['summary']
-        sensitive_topics = results.json()['content_safety_labels']['summary']
-
-        st.header("Summary of this video")
-        st.write(summary)
-
-        st.header("Sensitive content")
-        if sensitive_topics != {}:
-            st.subheader('🚨 Mention of the following sensitive topics detected.')
-            moderation_df = pd.DataFrame(sensitive_topics.items())
-            moderation_df.columns = ['topic','confidence']
-            st.dataframe(moderation_df, use_container_width=True)
-
-        else:
-            st.subheader('✅ All clear! No sensitive content detected.')   
-
-        st.header("Topics discussed")
-        topics_df = pd.DataFrame(topics.items())
-        topics_df.columns = ['topic','confidence']
-        topics_df["topic"] = topics_df["topic"].str.split(">")
-        expanded_topics = topics_df.topic.apply(pd.Series).add_prefix('topic_level_')
-        topics_df = topics_df.join(expanded_topics).drop('topic', axis=1).sort_values(['confidence'], ascending=False).fillna('')
+        audio_url, error = upload_to_AssemblyAI(save_location)
         
-        st.dataframe(topics_df)
+        if error:
+            st.write(error)
+        else:
+            # start analysis of the file
+            polling_endpoint, error = start_analysis(audio_url)
+
+            if error:
+                st.write(error)
+            else:
+                # receive the results
+                results = get_analysis_results(polling_endpoint)
+
+                summary = results.json()['summary']
+                topics = results.json()['iab_categories_result']['summary']
+                sensitive_topics = results.json()['content_safety_labels']['summary']
+
+                st.header("Summary of this video")
+                st.write(summary)
+
+                st.header("Sensitive content")
+                if sensitive_topics != {}:
+                    st.subheader('🚨 Mention of the following sensitive topics detected.')
+                    moderation_df = pd.DataFrame(sensitive_topics.items())
+                    moderation_df.columns = ['topic','confidence']
+                    st.dataframe(moderation_df, use_container_width=True)
+
+                else:
+                    st.subheader('✅ All clear! No sensitive content detected.')
+
+                st.header("Topics discussed")
+                topics_df = pd.DataFrame(topics.items())
+                topics_df.columns = ['topic','confidence']
+                topics_df["topic"] = topics_df["topic"].str.split(">")
+                expanded_topics = topics_df.topic.apply(pd.Series).add_prefix('topic_level_')
+                topics_df = topics_df.join(expanded_topics).drop('topic', axis=1).sort_values(['confidence'], ascending=False).fillna('')
+
+                st.dataframe(topics_df)
 
 
 
